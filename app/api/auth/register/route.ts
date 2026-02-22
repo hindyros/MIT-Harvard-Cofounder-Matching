@@ -47,8 +47,10 @@ export async function POST(req: NextRequest) {
 
     try {
       await sendVerificationEmail(email, verificationToken);
-    } catch {
-      // Email sending may fail in dev — still allow registration
+    } catch (emailErr) {
+      // Log so you can see the error in Vercel logs (Functions → select deployment → Logs)
+      console.error('Verification email failed:', emailErr);
+      // Still allow registration; user can request a new link later if we add that
     }
 
     return successResponse(

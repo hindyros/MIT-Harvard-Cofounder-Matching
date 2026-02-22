@@ -19,6 +19,7 @@ function ApplyPageInner() {
   const searchParams = useSearchParams();
   const initialStep = (searchParams.get('step') as Step) || 'register';
   const [step, setStep] = useState<Step>(initialStep);
+  const [pendingVerifyEmail, setPendingVerifyEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const s = searchParams.get('step') as Step;
@@ -37,8 +38,15 @@ function ApplyPageInner() {
 
         <StepIndicator current={step} />
 
-        {step === 'register' && <RegisterStep onNext={() => setStep('verify-sent')} />}
-        {step === 'verify-sent' && <VerifySentStep />}
+        {step === 'register' && (
+          <RegisterStep
+            onNext={(email) => {
+              setPendingVerifyEmail(email);
+              setStep('verify-sent');
+            }}
+          />
+        )}
+        {step === 'verify-sent' && <VerifySentStep email={pendingVerifyEmail} />}
         {step === 'application' && <ApplicationStep onNext={() => setStep('profile')} />}
         {step === 'profile' && <ProfileStep onNext={() => setStep('pending')} router={router} />}
         {step === 'pending' && <PendingStep />}
@@ -81,7 +89,7 @@ function StepIndicator({ current }: { current: Step }) {
   );
 }
 
-function RegisterStep({ onNext }: { onNext: () => void }) {
+function RegisterStep({ onNext }: { onNext: (email: string) => void }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -107,7 +115,7 @@ function RegisterStep({ onNext }: { onNext: () => void }) {
       return;
     }
 
-    onNext();
+    onNext(email);
   }
 
   return (
@@ -177,7 +185,28 @@ function RegisterStep({ onNext }: { onNext: () => void }) {
   );
 }
 
-function VerifySentStep() {
+function VerifySentStep({ email }: { email: string | null }) {
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [resendError, setResendError] = useState('');
+
+  async function handleResend() {
+    if (!email) return;
+    setResendStatus('sending');
+    setResendError('');
+    const res = await fetch('/api/auth/resend-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setResendStatus('sent');
+    } else {
+      setResendStatus('error');
+      setResendError(data.hint || data.error);
+    }
+  }
+
   return (
     <div className="glass rounded-2xl p-8 text-center">
       <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-6">
@@ -186,9 +215,25 @@ function VerifySentStep() {
         </svg>
       </div>
       <h2 className="text-xl font-semibold mb-2">Check your email</h2>
-      <p className="text-text-secondary text-sm">
+      <p className="text-text-secondary text-sm mb-6">
         We sent a verification link to your university email. Click it to continue your application.
       </p>
+      {email && (
+        <div className="pt-4 border-t border-border">
+          <p className="text-text-tertiary text-xs mb-2">Didn&apos;t get it?</p>
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={resendStatus === 'sending'}
+            className="text-gold hover:text-gold-light text-sm font-medium disabled:opacity-50"
+          >
+            {resendStatus === 'sending' ? 'Sending…' : resendStatus === 'sent' ? 'Sent! Check your inbox.' : 'Resend verification email'}
+          </button>
+          {resendStatus === 'error' && (
+            <p className="text-error text-xs mt-2 text-left bg-error/10 rounded-lg p-2">{resendError}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

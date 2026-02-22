@@ -1,14 +1,21 @@
 import { Resend } from 'resend';
 import { getBaseUrl } from './api-helpers';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) {
+    throw new Error('RESEND_API_KEY is not set. Add it in Vercel → Settings → Environment Variables.');
+  }
+  return new Resend(key);
+}
+
 const FROM_EMAIL = 'Founders Club <onboarding@resend.dev>';
 
 export async function sendVerificationEmail(email: string, token: string) {
   const baseUrl = getBaseUrl();
   const verifyUrl = `${baseUrl}/api/auth/verify?token=${token}`;
 
-  await resend.emails.send({
+  const { data, error } = await getResend().emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: 'Verify your email — Founders Club',
@@ -22,12 +29,17 @@ export async function sendVerificationEmail(email: string, token: string) {
       </div>
     `,
   });
+
+  if (error) {
+    throw new Error(`Resend: ${error.message}`);
+  }
+  return data;
 }
 
 export async function sendApprovalEmail(email: string, name: string) {
   const baseUrl = getBaseUrl();
 
-  await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: 'Welcome to Founders Club',
@@ -40,6 +52,7 @@ export async function sendApprovalEmail(email: string, name: string) {
       </div>
     `,
   });
+  if (error) throw new Error(`Resend: ${error.message}`);
 }
 
 export async function sendWeeklyMatchEmail(
@@ -62,7 +75,7 @@ export async function sendWeeklyMatchEmail(
     )
     .join('');
 
-  await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: 'Your weekly cofounder matches — Founders Club',
@@ -75,4 +88,5 @@ export async function sendWeeklyMatchEmail(
       </div>
     `,
   });
+  if (error) throw new Error(`Resend: ${error.message}`);
 }
