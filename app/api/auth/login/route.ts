@@ -19,7 +19,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (!user.isVerified) {
-      return errorResponse('Email not verified', 'Check your email for the verification link', 403);
+      if (process.env.SKIP_EMAIL_VERIFY === 'true') {
+        user.isVerified = true;
+        await user.save();
+      } else {
+        return errorResponse('Email not verified', 'Check your email for the verification link', 403);
+      }
     }
 
     const valid = await comparePassword(password, user.passwordHash);
