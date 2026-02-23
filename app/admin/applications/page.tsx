@@ -66,7 +66,7 @@ export default function ApplicationsPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [applications, selectedIdx]);
+  }, [applications, selectedIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function reviewApplication(id: string, decision: string) {
     setReviewingId(id);
