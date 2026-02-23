@@ -17,14 +17,55 @@ export default function ApplyPage() {
 function ApplyPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialStep = (searchParams.get('step') as Step) || 'register';
-  const [step, setStep] = useState<Step>(initialStep);
+  const [step, setStep] = useState<Step | null>(null);
   const [pendingVerifyEmail, setPendingVerifyEmail] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const s = searchParams.get('step') as Step;
-    if (s) setStep(s);
-  }, [searchParams]);
+    const urlStep = searchParams.get('step') as Step | null;
+
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then(async (data) => {
+        if (!data.success) {
+          setStep(urlStep || 'register');
+          setChecking(false);
+          return;
+        }
+
+        const user = data.data;
+        if (user.isApproved) {
+          router.push('/home');
+          return;
+        }
+
+        if (urlStep === 'application' || urlStep === 'profile' || urlStep === 'pending') {
+          setStep(urlStep);
+          setChecking(false);
+          return;
+        }
+
+        const appRes = await fetch('/api/applications').then((r) => r.json());
+        if (appRes.success && appRes.data.status !== 'not_submitted') {
+          setStep('pending');
+        } else {
+          setStep('application');
+        }
+        setChecking(false);
+      })
+      .catch(() => {
+        setStep(urlStep || 'register');
+        setChecking(false);
+      });
+  }, [searchParams, router]);
+
+  if (checking || !step) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-16">

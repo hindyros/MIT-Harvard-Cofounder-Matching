@@ -52,7 +52,7 @@ function LoginPageInner() {
       if (data.data.user.isApproved) {
         router.push('/home');
       } else {
-        router.push('/apply?step=pending');
+        router.push('/apply');
       }
     } catch {
       setError('Something went wrong. Please try again.');

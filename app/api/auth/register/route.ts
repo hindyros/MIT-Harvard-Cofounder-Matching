@@ -28,15 +28,37 @@ export async function POST(req: NextRequest) {
       return errorResponse('Weak password', 'Password must be at least 8 characters', 400);
     }
 
+    const skipEmailVerification = process.env.SKIP_EMAIL_VERIFY === 'true';
+
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) {
+      if (skipEmailVerification && !existing.isVerified) {
+        existing.passwordHash = await hashPassword(password);
+        existing.name = name;
+        existing.isVerified = true;
+        existing.verificationToken = undefined;
+        existing.verificationExpires = undefined;
+        await existing.save();
+
+        const token = signToken(existing._id.toString());
+        const response = NextResponse.json(
+          { success: true, data: { message: 'Account recovered and verified.', school: existing.school, skipVerification: true } },
+          { status: 200 }
+        );
+        response.cookies.set('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 30 * 24 * 60 * 60,
+          path: '/',
+        });
+        return response;
+      }
       return errorResponse('Email taken', 'An account with this email already exists', 409);
     }
 
     const passwordHash = await hashPassword(password);
     const verificationToken = nanoid(32);
-
-    const skipEmailVerification = process.env.SKIP_EMAIL_VERIFY === 'true';
 
     await User.create({
       email: email.toLowerCase(),
