@@ -9,14 +9,16 @@ function getResend() {
   return new Resend(key);
 }
 
-const FROM_EMAIL = 'Founders Club <onboarding@resend.dev>';
+function getFromEmail() {
+  return process.env.getFromEmail() || 'Founders Club <onboarding@resend.dev>';
+}
 
 export async function sendVerificationEmail(email: string, token: string) {
   const baseUrl = getBaseUrl();
   const verifyUrl = `${baseUrl}/api/auth/verify?token=${token}`;
 
   const { data, error } = await getResend().emails.send({
-    from: FROM_EMAIL,
+    from: getFromEmail(),
     to: email,
     subject: 'Verify your email — Founders Club',
     html: `
@@ -40,7 +42,7 @@ export async function sendApprovalEmail(email: string, name: string) {
   const baseUrl = getBaseUrl();
 
   const { error } = await getResend().emails.send({
-    from: FROM_EMAIL,
+    from: getFromEmail(),
     to: email,
     subject: 'Welcome to Founders Club',
     html: `
@@ -76,7 +78,7 @@ export async function sendWeeklyMatchEmail(
     .join('');
 
   const { error } = await getResend().emails.send({
-    from: FROM_EMAIL,
+    from: getFromEmail(),
     to: email,
     subject: 'Your weekly cofounder matches — Founders Club',
     html: `
