@@ -28,10 +28,36 @@ export async function comparePassword(password: string, hash: string): Promise<b
   return bcrypt.compare(password, hash);
 }
 
+const HARVARD_DOMAINS = [
+  'harvard.edu',
+  'fas.harvard.edu',
+  'college.harvard.edu',
+  'g.harvard.edu',
+  'hbs.edu',
+  'hks.harvard.edu',
+  'hls.harvard.edu',
+  'gse.harvard.edu',
+  'hsph.harvard.edu',
+  'seas.harvard.edu',
+  'post.harvard.edu',
+  'mba.harvard.edu',
+  'dce.harvard.edu',
+];
+
 export function validateEmail(email: string): { valid: boolean; school?: 'MIT' | 'Harvard' } {
   const lower = email.toLowerCase().trim();
+
+  const testEmails = (process.env.TEST_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+  if (testEmails.includes(lower)) {
+    return { valid: true, school: 'MIT' };
+  }
+
   if (lower.endsWith('@mit.edu')) return { valid: true, school: 'MIT' };
-  if (lower.endsWith('@harvard.edu')) return { valid: true, school: 'Harvard' };
+
+  for (const domain of HARVARD_DOMAINS) {
+    if (lower.endsWith(`@${domain}`)) return { valid: true, school: 'Harvard' };
+  }
+
   return { valid: false };
 }
 

@@ -40,9 +40,13 @@ function ApplyPageInner() {
 
         {step === 'register' && (
           <RegisterStep
-            onNext={(email) => {
-              setPendingVerifyEmail(email);
-              setStep('verify-sent');
+            onNext={(email, skipVerification) => {
+              if (skipVerification) {
+                setStep('application');
+              } else {
+                setPendingVerifyEmail(email);
+                setStep('verify-sent');
+              }
             }}
           />
         )}
@@ -89,7 +93,7 @@ function StepIndicator({ current }: { current: Step }) {
   );
 }
 
-function RegisterStep({ onNext }: { onNext: (email: string) => void }) {
+function RegisterStep({ onNext }: { onNext: (email: string, skipVerification?: boolean) => void }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -115,7 +119,7 @@ function RegisterStep({ onNext }: { onNext: (email: string) => void }) {
       return;
     }
 
-    onNext(email);
+    onNext(email, data.data.skipVerification);
   }
 
   return (

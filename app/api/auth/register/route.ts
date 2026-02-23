@@ -1,9 +1,9 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { connectDB } from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
-import { successResponse, errorResponse } from '@/lib/utils/api-helpers';
-import { validateEmail, hashPassword } from '@/lib/utils/auth';
+import { errorResponse } from '@/lib/utils/api-helpers';
+import { validateEmail, hashPassword, signToken } from '@/lib/utils/auth';
 import { sendVerificationEmail } from '@/lib/utils/email';
 
 export async function POST(req: NextRequest) {
@@ -36,29 +36,62 @@ export async function POST(req: NextRequest) {
     const passwordHash = await hashPassword(password);
     const verificationToken = nanoid(32);
 
+    const skipEmailVerification = process.env.SKIP_EMAIL_VERIFY === 'true';
+
     await User.create({
       email: email.toLowerCase(),
       passwordHash,
       name,
       school,
-      verificationToken,
-      verificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      isVerified: skipEmailVerification,
+      verificationToken: skipEmailVerification ? undefined : verificationToken,
+      verificationExpires: skipEmailVerification
+        ? undefined
+        : new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
 
-    try {
-      await sendVerificationEmail(email, verificationToken);
-    } catch (emailErr) {
-      // Log so you can see the error in Vercel logs (Functions → select deployment → Logs)
-      console.error('Verification email failed:', emailErr);
-      // Still allow registration; user can request a new link later if we add that
+    if (!skipEmailVerification) {
+      try {
+        await sendVerificationEmail(email, verificationToken);
+      } catch (emailErr) {
+        console.error('Verification email failed:', emailErr);
+      }
     }
 
-    return successResponse(
+    if (skipEmailVerification) {
+      const user = await User.findOne({ email: email.toLowerCase() });
+      const token = signToken(user!._id.toString());
+      const response = NextResponse.json(
+        {
+          success: true,
+          data: {
+            message: 'Account created. You can now continue your application.',
+            school,
+            skipVerification: true,
+          },
+        },
+        { status: 201 }
+      );
+      response.cookies.set('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60,
+        path: '/',
+      });
+      return response;
+    }
+
+    return NextResponse.json(
       {
-        message: 'Check your email for a verification link',
-        school,
+        success: true,
+        data: {
+          message: 'Check your email for a verification link',
+          school,
+          skipVerification: false,
+        },
       },
-      201
+      { status: 201 }
     );
   } catch (err) {
     console.error('Registration error:', err);
