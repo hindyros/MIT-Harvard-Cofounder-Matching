@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import CoffeeChat from '@/lib/models/CoffeeChat';
-import { requireAuth } from '@/lib/utils/auth';
+import { requireAuthOrAgent } from '@/lib/utils/auth';
 import { successResponse, errorResponse } from '@/lib/utils/api-helpers';
 
 export async function GET(req: NextRequest) {
-  const { user, error } = await requireAuth(req);
+  const { user, error } = await requireAuthOrAgent(req);
   if (error) return error;
 
   try {
@@ -26,8 +26,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireAuth(req);
-  if (error) return error;
+  const { user, error: err2 } = await requireAuthOrAgent(req);
+  if (err2) return err2;
 
   try {
     await connectDB();

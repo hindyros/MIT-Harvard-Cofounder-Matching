@@ -1,15 +1,12 @@
 import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import Event from '@/lib/models/Event';
-import { requireAuth, authenticateAgent } from '@/lib/utils/auth';
+import { requireAuthOrAgent } from '@/lib/utils/auth';
 import { successResponse, errorResponse } from '@/lib/utils/api-helpers';
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireAuth(req);
-  if (error) {
-    const agent = await authenticateAgent(req);
-    if (!agent) return error;
-  }
+  const { error } = await requireAuthOrAgent(req);
+  if (error) return error;
 
   try {
     await connectDB();
@@ -20,7 +17,11 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(req.nextUrl.searchParams.get('limit') || '20');
 
     const filter: Record<string, unknown> = {};
-    if (upcoming) filter.date = { $gte: new Date() };
+    if (upcoming) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      filter.date = { $gte: startOfDay };
+    }
     if (school && school !== 'all') filter.school = school;
     if (category) filter.category = category;
 
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireAuth(req);
+  const { user, error } = await requireAuthOrAgent(req);
   if (error) return error;
 
   try {

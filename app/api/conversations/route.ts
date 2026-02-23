@@ -1,16 +1,13 @@
 import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import Conversation from '@/lib/models/Conversation';
-import { requireAuth, authenticateAgent } from '@/lib/utils/auth';
+import { requireAuthOrAgent } from '@/lib/utils/auth';
 import { successResponse, errorResponse } from '@/lib/utils/api-helpers';
 import User from '@/lib/models/User';
 
 export async function GET(req: NextRequest) {
-  const { user, error } = await requireAuth(req);
-  if (error) {
-    const agent = await authenticateAgent(req);
-    if (!agent) return error;
-  }
+  const { user, error } = await requireAuthOrAgent(req);
+  if (error) return error;
 
   try {
     await connectDB();
@@ -37,7 +34,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireAuth(req);
+  const { user, error } = await requireAuthOrAgent(req);
   if (error) return error;
 
   try {

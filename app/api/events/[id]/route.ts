@@ -1,14 +1,14 @@
 import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import Event from '@/lib/models/Event';
-import { requireAuth } from '@/lib/utils/auth';
+import { requireAuthOrAgent } from '@/lib/utils/auth';
 import { successResponse, errorResponse } from '@/lib/utils/api-helpers';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(req);
+  const { error } = await requireAuthOrAgent(req);
   if (error) return error;
 
   try {

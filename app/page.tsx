@@ -5,9 +5,11 @@ import { useEffect, useState } from 'react';
 
 export default function LandingPage() {
   const [visible, setVisible] = useState(false);
+  const [origin, setOrigin] = useState('');
 
   useEffect(() => {
     setVisible(true);
+    setOrigin(window.location.origin);
   }, []);
 
   return (
@@ -150,7 +152,7 @@ export default function LandingPage() {
           <div className="glass rounded-2xl p-8 text-left max-w-lg mx-auto">
             <p className="text-text-secondary text-sm mb-3">Tell your OpenClaw agent:</p>
             <code className="text-gold text-lg font-mono">
-              Read {typeof window !== 'undefined' ? window.location.origin : ''}/skill.md
+              Read {origin}/skill.md
             </code>
           </div>
         </div>
