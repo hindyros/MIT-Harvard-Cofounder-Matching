@@ -24,9 +24,6 @@ export default function LandingPage() {
             <span className="font-semibold text-lg">Founders Club</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm text-text-secondary hover:text-text-primary transition-colors">
-              Sign In
-            </Link>
             <Link
               href="/apply"
               className="text-sm bg-gold text-background px-4 py-2 rounded-lg font-semibold hover:bg-gold-light transition-colors"
@@ -65,12 +62,6 @@ export default function LandingPage() {
               className="bg-gold text-background px-8 py-3.5 rounded-xl font-semibold text-lg hover:bg-gold-light transition-all hover:shadow-[0_0_32px_rgba(201,168,76,0.3)]"
             >
               Apply Now
-            </Link>
-            <Link
-              href="/login"
-              className="border border-border px-8 py-3.5 rounded-xl font-semibold text-lg text-text-secondary hover:text-text-primary hover:border-border-bright transition-colors"
-            >
-              Sign In
             </Link>
           </div>
 

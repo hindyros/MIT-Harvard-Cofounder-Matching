@@ -220,12 +220,7 @@ function RegisterStep({ onNext }: { onNext: (email: string, skipVerification?: b
         </button>
       </form>
 
-      <p className="text-center text-text-tertiary text-sm mt-6">
-        Already have an account?{' '}
-        <Link href="/login" className="text-gold hover:text-gold-light transition-colors">
-          Sign in
-        </Link>
-      </p>
+      {/* Login link removed — kept in /login for admin access */}
     </div>
   );
 }
@@ -515,10 +510,10 @@ function PendingStep() {
         We review every application personally. You&apos;ll hear from us within 48 hours.
       </p>
       <Link
-        href="/login"
+        href="/"
         className="text-gold hover:text-gold-light text-sm transition-colors"
       >
-        Back to login
+        Back to home
       </Link>
     </div>
   );

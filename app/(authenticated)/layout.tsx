@@ -34,18 +34,18 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       .then((r) => r.json())
       .then((data) => {
         if (!data.success || !data.data.isApproved) {
-          router.push('/login');
+          router.push('/');
           return;
         }
         setUser(data.data);
         setLoading(false);
       })
-      .catch(() => router.push('/login'));
+      .catch(() => router.push('/'));
   }, [router]);
 
   const handleLogout = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
+    router.push('/');
   }, [router]);
 
   const handleDeleteAccount = useCallback(async () => {

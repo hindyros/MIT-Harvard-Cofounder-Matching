@@ -48,7 +48,7 @@ export default function EditProfilePage() {
       .then((r) => r.json())
       .then((data) => {
         if (!data.success) {
-          router.push('/login');
+          router.push('/');
           return;
         }
         const d = data.data as ProfileData;
