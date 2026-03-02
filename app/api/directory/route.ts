@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
         interests: u.profile?.interests || [],
         program: u.profile?.program,
         yearOfStudy: u.profile?.yearOfStudy,
+        avatarUrl: u.profile?.avatarUrl || null,
         lastActive: u.lastActive,
       })),
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },

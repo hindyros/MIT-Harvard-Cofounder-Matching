@@ -12,6 +12,7 @@ interface Member {
   interests: string[];
   program?: string;
   yearOfStudy?: string;
+  avatarUrl?: string | null;
 }
 
 export default function DirectoryPage() {
@@ -91,9 +92,13 @@ export default function DirectoryPage() {
             <Link key={m.id} href={`/profile/${m.id}`}>
               <div className="glass glass-hover rounded-xl p-5 cursor-pointer transition-all h-full">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold text-sm font-semibold shrink-0">
-                    {m.name.charAt(0)}
-                  </div>
+                  {m.avatarUrl ? (
+                    <img src={m.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold text-sm font-semibold shrink-0">
+                      {m.name.charAt(0)}
+                    </div>
+                  )}
                   <div className="min-w-0">
                     <p className="font-medium truncate">{m.name}</p>
                     <p className={`text-xs ${m.school === 'MIT' ? 'text-mit' : 'text-harvard'}`}>

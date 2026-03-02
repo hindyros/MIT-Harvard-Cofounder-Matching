@@ -17,6 +17,7 @@ interface Profile {
     lookingFor: string[];
     linkedIn?: string;
     website?: string;
+    avatarUrl?: string;
     yearOfStudy?: string;
     program?: string;
   };
@@ -72,9 +73,13 @@ export default function ProfilePage() {
       <div className="glass rounded-2xl p-8 mt-4">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center text-gold text-2xl font-bold">
-              {profile.name.charAt(0)}
-            </div>
+            {profile.profile.avatarUrl ? (
+              <img src={profile.profile.avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover" />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center text-gold text-2xl font-bold">
+                {profile.name.charAt(0)}
+              </div>
+            )}
             <div>
               <h1 className="text-2xl font-bold font-display">{profile.name}</h1>
               <p className={`text-sm ${profile.school === 'MIT' ? 'text-mit' : 'text-harvard'}`}>

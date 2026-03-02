@@ -76,10 +76,22 @@ async function provisionUserFromClerk(clerkUserId: string): Promise<IUser | null
 
     await connectDB();
 
+    const avatarUrl = clerkUser.imageUrl || undefined;
+
+    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+    const isAdmin = adminEmails.includes(email);
+
     const existing = await User.findOne({ email });
     if (existing) {
       existing.clerkUserId = clerkUserId;
       existing.name = name;
+      if (isAdmin) {
+        existing.role = 'admin';
+        existing.isApproved = true;
+      }
+      if (avatarUrl && !existing.profile?.avatarUrl) {
+        existing.profile = { ...existing.profile, avatarUrl };
+      }
       await existing.save();
       return existing;
     }
@@ -89,8 +101,9 @@ async function provisionUserFromClerk(clerkUserId: string): Promise<IUser | null
       email,
       name,
       school,
-      isApproved: false,
-      role: 'user',
+      isApproved: isAdmin,
+      role: isAdmin ? 'admin' : 'user',
+      profile: avatarUrl ? { avatarUrl } : undefined,
     });
   } catch (err) {
     console.error('JIT user provisioning failed:', err);
