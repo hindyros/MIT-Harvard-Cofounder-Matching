@@ -7,6 +7,7 @@ const hasValidClerkKey = clerkKey.length > 0 && !clerkKey.includes('REPLACE_ME')
 
 const isPublicRoute = createRouteMatcher([
   '/',
+  '/login',
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/apply(.*)',

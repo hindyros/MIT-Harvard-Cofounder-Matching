@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useClerk } from '@clerk/nextjs';
 import Link from 'next/link';
 
-type Step = 'loading' | 'sign-up' | 'application' | 'profile' | 'pending';
+type Step = 'loading' | 'ineligible' | 'application' | 'profile' | 'pending';
 
 export default function ApplyPage() {
   const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
+  const { signOut } = useClerk();
   const [step, setStep] = useState<Step>('loading');
 
   useEffect(() => {
@@ -20,47 +21,58 @@ export default function ApplyPage() {
       return;
     }
 
-    fetch('/api/auth/me')
-      .then((r) => r.json())
-      .then(async (data) => {
+    let cancelled = false;
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+
+        if (cancelled) return;
+
         if (!data.success) {
-          setStep('loading');
-          setTimeout(() => {
-            fetch('/api/auth/me')
-              .then((r) => r.json())
-              .then((retryData) => {
-                if (!retryData.success) {
-                  setStep('application');
-                  return;
-                }
-                routeUser(retryData.data);
-              });
-          }, 2000);
+          if (res.status === 403) {
+            setStep('ineligible');
+            return;
+          }
+          const retryRes = await new Promise<Response>((resolve) =>
+            setTimeout(() => resolve(fetch('/api/auth/me')), 2000)
+          );
+          const retryData = await retryRes.json();
+          if (cancelled) return;
+          if (!retryData.success) {
+            setStep(retryRes.status === 403 ? 'ineligible' : 'application');
+            return;
+          }
+          routeUser(retryData.data);
           return;
         }
-        routeUser(data.data);
-      })
-      .catch(() => {
-        setStep('application');
-      });
 
-    function routeUser(user: { isApproved: boolean }) {
+        routeUser(data.data);
+      } catch {
+        if (!cancelled) setStep('application');
+      }
+    }
+
+    async function routeUser(user: { isApproved: boolean }) {
       if (user.isApproved) {
         router.push('/home');
         return;
       }
-
-      fetch('/api/applications')
-        .then((r) => r.json())
-        .then((appRes) => {
-          if (appRes.success && appRes.data.status !== 'not_submitted') {
-            setStep('pending');
-          } else {
-            setStep('application');
-          }
-        })
-        .catch(() => setStep('application'));
+      try {
+        const appRes = await fetch('/api/applications').then((r) => r.json());
+        if (appRes.success && appRes.data.status !== 'not_submitted') {
+          setStep('pending');
+        } else {
+          setStep('application');
+        }
+      } catch {
+        setStep('application');
+      }
     }
+
+    checkAuth();
+    return () => { cancelled = true; };
   }, [isLoaded, isSignedIn, router]);
 
   if (step === 'loading') {
@@ -71,27 +83,59 @@ export default function ApplyPage() {
     );
   }
 
-  if (step === 'sign-up') {
-    router.push('/sign-up');
-    return null;
+  if (step === 'ineligible') {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md animate-fade-in">
+          <PageHeader />
+          <div className="glass rounded-2xl p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Email not eligible</h2>
+            <p className="text-text-secondary text-sm mb-6">
+              Founders Club is exclusively for MIT and Harvard students.
+              Only <span className="text-text-primary">@mit.edu</span> and <span className="text-text-primary">@harvard.edu</span> emails are accepted.
+            </p>
+            <button
+              onClick={() => signOut().then(() => router.push('/sign-up'))}
+              className="w-full bg-gold text-background font-semibold py-3 rounded-lg hover:bg-gold-light transition-colors"
+            >
+              Sign out and try a different email
+            </button>
+            <Link href="/" className="block text-text-tertiary hover:text-text-secondary text-sm mt-4 transition-colors">
+              Back to home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-lg animate-fade-in">
-        <div className="text-center mb-10">
-          <Link href="/" className="inline-block">
-            <h1 className="text-2xl font-bold text-gold font-display">Founders Club</h1>
-            <p className="text-text-tertiary text-sm mt-1">MIT × Harvard Cofounder Matching</p>
-          </Link>
-        </div>
+        <PageHeader />
 
         <StepIndicator current={step} />
 
-        {step === 'application' && <ApplicationStep onNext={() => setStep('profile')} />}
-        {step === 'profile' && <ProfileStep onNext={() => setStep('pending')} router={router} />}
+        {step === 'application' && <ApplicationStep onNext={() => setStep('profile')} onAlreadyApplied={() => setStep('pending')} />}
+        {step === 'profile' && <ProfileStep onNext={() => setStep('pending')} />}
         {step === 'pending' && <PendingStep />}
       </div>
+    </div>
+  );
+}
+
+function PageHeader() {
+  return (
+    <div className="text-center mb-10">
+      <Link href="/" className="inline-block">
+        <h1 className="text-2xl font-bold text-gold font-display">Founders Club</h1>
+        <p className="text-text-tertiary text-sm mt-1">MIT × Harvard Cofounder Matching</p>
+      </Link>
     </div>
   );
 }
@@ -129,7 +173,7 @@ function StepIndicator({ current }: { current: Step }) {
   );
 }
 
-function ApplicationStep({ onNext }: { onNext: () => void }) {
+function ApplicationStep({ onNext, onAlreadyApplied }: { onNext: () => void; onAlreadyApplied: () => void }) {
   const [answers, setAnswers] = useState({
     whyFounder: '',
     currentProject: '',
@@ -138,6 +182,7 @@ function ApplicationStep({ onNext }: { onNext: () => void }) {
     whatLookingFor: '',
   });
   const [error, setError] = useState('');
+  const [showSignIn, setShowSignIn] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const questions = [
@@ -151,23 +196,38 @@ function ApplicationStep({ onNext }: { onNext: () => void }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setShowSignIn(false);
     setLoading(true);
 
-    const res = await fetch('/api/applications', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(answers),
-    });
+    try {
+      const res = await fetch('/api/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(answers),
+      });
 
-    const data = await res.json();
-    setLoading(false);
+      const data = await res.json();
+      setLoading(false);
 
-    if (!data.success) {
-      setError(data.hint || data.error);
-      return;
+      if (!data.success) {
+        if (res.status === 401) {
+          setError('Your session has expired.');
+          setShowSignIn(true);
+          return;
+        }
+        if (res.status === 409) {
+          onAlreadyApplied();
+          return;
+        }
+        setError(data.hint || data.error);
+        return;
+      }
+
+      onNext();
+    } catch {
+      setLoading(false);
+      setError('Something went wrong. Please try again.');
     }
-
-    onNext();
   }
 
   return (
@@ -179,7 +239,12 @@ function ApplicationStep({ onNext }: { onNext: () => void }) {
 
       {error && (
         <div className="bg-error/10 border border-error/20 rounded-lg px-4 py-3 mb-6 text-sm text-error">
-          {error}
+          <p>{error}</p>
+          {showSignIn && (
+            <Link href="/sign-in" className="underline hover:text-error/80 mt-1 inline-block">
+              Sign in again
+            </Link>
+          )}
         </div>
       )}
 
@@ -209,7 +274,7 @@ function ApplicationStep({ onNext }: { onNext: () => void }) {
   );
 }
 
-function ProfileStep({ onNext, router }: { onNext: () => void; router: ReturnType<typeof useRouter> }) {
+function ProfileStep({ onNext }: { onNext: () => void }) {
   const [profile, setProfile] = useState({
     headline: '',
     bio: '',
@@ -243,7 +308,6 @@ function ProfileStep({ onNext, router }: { onNext: () => void; router: ReturnTyp
 
     setLoading(false);
     onNext();
-    void router;
   }
 
   return (

@@ -1,9 +1,18 @@
+import { auth } from '@clerk/nextjs/server';
 import { authenticateUser } from '@/lib/utils/auth';
 import { successResponse, errorResponse } from '@/lib/utils/api-helpers';
 
 export async function GET() {
   const user = await authenticateUser();
   if (!user) {
+    const { userId } = await auth().catch(() => ({ userId: null }));
+    if (userId) {
+      return errorResponse(
+        'Ineligible email',
+        'Only @mit.edu and @harvard.edu email addresses are accepted.',
+        403
+      );
+    }
     return errorResponse('Unauthorized', 'Please log in', 401);
   }
 
