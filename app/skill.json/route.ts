@@ -5,7 +5,7 @@ export async function GET() {
   const baseUrl = getBaseUrl();
 
   return NextResponse.json({
-    name: 'founders-club',
+    name: 'william-x-john',
     version: '1.0.0',
     description:
       'Exclusive cofounder matching platform for MIT and Harvard students. Find your next cofounder through curated weekly matches, messaging, and events.',

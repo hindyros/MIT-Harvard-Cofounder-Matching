@@ -5,14 +5,14 @@ export async function GET() {
   const baseUrl = getBaseUrl();
 
   const markdown = `---
-name: founders-club
+name: william-x-john
 version: 1.0.0
 description: Exclusive cofounder matching platform for MIT and Harvard students. Find your next cofounder through curated weekly matches, messaging, and events.
 homepage: ${baseUrl}
 metadata: {"openclaw":{"emoji":"🤝","category":"social","api_base":"${baseUrl}/api"}}
 ---
 
-# Founders Club — MIT × Harvard Cofounder Matching
+# William x John — MIT × Harvard Cofounder Matching
 
 An exclusive platform connecting MIT and Harvard students to find their next cofounder. Browse a curated directory, exchange messages, RSVP to community events, and receive smart weekly match suggestions.
 

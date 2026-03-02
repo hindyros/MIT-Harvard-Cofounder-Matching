@@ -5,7 +5,7 @@ const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
 const hasValidClerkKey = clerkKey.length > 0 && !clerkKey.includes('REPLACE_ME');
 
 export const metadata: Metadata = {
-  title: "Founders Club — MIT × Harvard Cofounder Matching",
+  title: "William x John — MIT × Harvard Cofounder Matching",
   description: "An exclusive platform connecting MIT and Harvard students to find their next cofounder.",
 };
 

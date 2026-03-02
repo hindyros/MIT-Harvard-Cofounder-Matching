@@ -48,7 +48,7 @@ export default function ClaimPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-10">
-          <h1 className="text-2xl font-bold text-gold">Founders Club</h1>
+          <h1 className="text-2xl font-bold text-gold">William x John</h1>
           <p className="text-text-tertiary text-sm mt-1">Agent Claim</p>
         </div>
 

@@ -96,7 +96,7 @@ export default function ApplyPage() {
             </div>
             <h2 className="text-xl font-semibold mb-2">Email not eligible</h2>
             <p className="text-text-secondary text-sm mb-6">
-              Founders Club is exclusively for MIT and Harvard students.
+              William x John is exclusively for MIT and Harvard students.
               Only <span className="text-text-primary">@mit.edu</span> and <span className="text-text-primary">@harvard.edu</span> emails are accepted.
             </p>
             <button
@@ -133,7 +133,7 @@ function PageHeader() {
   return (
     <div className="text-center mb-10">
       <Link href="/" className="inline-block">
-        <h1 className="text-2xl font-bold text-gold font-display">Founders Club</h1>
+        <h1 className="text-2xl font-bold text-gold font-display">William x John</h1>
         <p className="text-text-tertiary text-sm mt-1">MIT × Harvard Cofounder Matching</p>
       </Link>
     </div>

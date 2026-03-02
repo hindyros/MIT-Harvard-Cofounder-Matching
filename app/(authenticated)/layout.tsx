@@ -72,7 +72,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       <aside className="w-64 border-r border-border bg-surface flex flex-col fixed h-screen">
         <div className="p-6 border-b border-border">
           <Link href="/home">
-            <h1 className="text-lg font-bold text-gold font-display">Founders Club</h1>
+            <h1 className="text-lg font-bold text-gold font-display">William x John</h1>
             <p className="text-text-tertiary text-xs mt-0.5">MIT × Harvard</p>
           </Link>
         </div>

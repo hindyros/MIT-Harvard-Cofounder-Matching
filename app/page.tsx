@@ -22,7 +22,7 @@ export default function LandingPage() {
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${navSolid ? 'bg-background/90 backdrop-blur-sm border-b border-border' : ''}`}>
         <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
-          <span className="text-sm tracking-[0.3em] uppercase font-light">Founders Club</span>
+          <span className="text-sm tracking-[0.3em] uppercase font-light">William x John</span>
           <div className="flex items-center gap-8">
             <Link href="/login" className="text-sm text-text-secondary hover:text-text-primary transition-colors">
               Login
@@ -130,7 +130,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-border py-8 px-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-text-tertiary tracking-wider uppercase">
-          <span>Founders Club — MIT × Harvard</span>
+          <span>William x John — MIT × Harvard</span>
           <div className="flex gap-8">
             <a href="/skill.md" className="hover:text-text-secondary transition-colors">skill.md</a>
             <a href="/heartbeat.md" className="hover:text-text-secondary transition-colors">heartbeat.md</a>

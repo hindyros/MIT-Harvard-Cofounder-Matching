@@ -10,7 +10,7 @@ function getResend() {
 }
 
 function getFromEmail() {
-  return process.env.FROM_EMAIL || 'Founders Club <onboarding@resend.dev>';
+  return process.env.FROM_EMAIL || 'William x John <onboarding@resend.dev>';
 }
 
 export async function sendApprovalEmail(email: string, name: string) {
@@ -19,12 +19,12 @@ export async function sendApprovalEmail(email: string, name: string) {
   const { error } = await getResend().emails.send({
     from: getFromEmail(),
     to: email,
-    subject: 'Welcome to Founders Club',
+    subject: 'Welcome to William x John',
     html: `
       <div style="font-family: 'Inter', sans-serif; max-width: 500px; margin: 0 auto; background: #0A0A0B; color: #F5F5F5; padding: 40px; border-radius: 12px;">
         <h1 style="color: #FFFFFF; font-size: 24px; margin-bottom: 8px;">You're in, ${name}.</h1>
         <p style="color: #A0A0A0; font-size: 14px; margin-bottom: 32px;">MIT × Harvard Cofounder Matching</p>
-        <p style="margin-bottom: 24px;">Your application has been approved. You now have full access to Founders Club — browse the directory, message other founders, and check your weekly matches.</p>
+        <p style="margin-bottom: 24px;">Your application has been approved. You now have full access to William x John — browse the directory, message other founders, and check your weekly matches.</p>
         <a href="${baseUrl}/sign-in" style="display: inline-block; background: #FFFFFF; color: #0A0A0B; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Sign In</a>
       </div>
     `,
@@ -55,7 +55,7 @@ export async function sendWeeklyMatchEmail(
   const { error } = await getResend().emails.send({
     from: getFromEmail(),
     to: email,
-    subject: 'Your weekly cofounder matches — Founders Club',
+    subject: 'Your weekly cofounder matches — William x John',
     html: `
       <div style="font-family: 'Inter', sans-serif; max-width: 500px; margin: 0 auto; background: #0A0A0B; color: #F5F5F5; padding: 40px; border-radius: 12px;">
         <h1 style="color: #FFFFFF; font-size: 24px; margin-bottom: 8px;">Your Matches This Week</h1>
