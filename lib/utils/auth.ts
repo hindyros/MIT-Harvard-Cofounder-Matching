@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { connectDB } from '@/lib/db/mongodb';
 import User, { IUser } from '@/lib/models/User';
 import Agent, { IAgent } from '@/lib/models/Agent';
@@ -45,12 +45,55 @@ export async function authenticateUser(_req?: NextRequest): Promise<IUser | null
     if (!clerkUserId) return null;
 
     await connectDB();
-    const user = await User.findOne({ clerkUserId });
-    if (!user) return null;
+    let user = await User.findOne({ clerkUserId });
+
+    if (!user) {
+      user = await provisionUserFromClerk(clerkUserId);
+      if (!user) return null;
+    }
 
     User.updateOne({ _id: user._id }, { lastActive: new Date() }).exec();
     return user;
   } catch {
+    return null;
+  }
+}
+
+async function provisionUserFromClerk(clerkUserId: string): Promise<IUser | null> {
+  try {
+    const client = await clerkClient();
+    const clerkUser = await client.users.getUser(clerkUserId);
+    const primaryEmail = clerkUser.emailAddresses.find(
+      (e) => e.id === clerkUser.primaryEmailAddressId
+    );
+    if (!primaryEmail) return null;
+
+    const email = primaryEmail.emailAddress.toLowerCase();
+    const name = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || email.split('@')[0];
+    const { valid, school } = validateEmail(email);
+
+    if (!valid) return null;
+
+    await connectDB();
+
+    const existing = await User.findOne({ email });
+    if (existing) {
+      existing.clerkUserId = clerkUserId;
+      existing.name = name;
+      await existing.save();
+      return existing;
+    }
+
+    return await User.create({
+      clerkUserId,
+      email,
+      name,
+      school,
+      isApproved: false,
+      role: 'user',
+    });
+  } catch (err) {
+    console.error('JIT user provisioning failed:', err);
     return null;
   }
 }
