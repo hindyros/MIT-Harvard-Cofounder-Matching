@@ -24,19 +24,29 @@ interface Profile {
   memberSince: string;
 }
 
+interface MutualConnection {
+  id: string;
+  name: string;
+  school: string;
+  avatarUrl?: string;
+}
+
 export default function ProfilePage() {
   const { id } = useParams();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mutuals, setMutuals] = useState<MutualConnection[]>([]);
 
   useEffect(() => {
-    fetch(`/api/profiles/${id}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) setProfile(data.data);
-        setLoading(false);
-      });
+    Promise.all([
+      fetch(`/api/profiles/${id}`).then((r) => r.json()),
+      fetch(`/api/profiles/${id}/mutual`).then((r) => r.json()),
+    ]).then(([profileData, mutualData]) => {
+      if (profileData.success) setProfile(profileData.data);
+      if (mutualData.success) setMutuals(mutualData.data.mutualConnections);
+      setLoading(false);
+    });
   }, [id]);
 
   async function startConversation() {
@@ -96,6 +106,26 @@ export default function ProfilePage() {
             Message
           </button>
         </div>
+
+        {mutuals.length > 0 && (
+          <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-gold/5 border border-gold/10">
+            <div className="flex -space-x-2">
+              {mutuals.slice(0, 3).map((m) =>
+                m.avatarUrl ? (
+                  <img key={m.id} src={m.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover border-2 border-background" />
+                ) : (
+                  <div key={m.id} className="w-6 h-6 rounded-full bg-gold/20 flex items-center justify-center text-gold text-[10px] font-semibold border-2 border-background">
+                    {m.name.charAt(0)}
+                  </div>
+                )
+              )}
+            </div>
+            <span className="text-sm text-text-secondary">
+              {mutuals.length} mutual connection{mutuals.length !== 1 ? 's' : ''}
+              {mutuals.length <= 3 && ` — ${mutuals.map((m) => m.name.split(' ')[0]).join(', ')}`}
+            </span>
+          </div>
+        )}
 
         {profile.profile.headline && (
           <p className="text-lg text-text-secondary mb-4">{profile.profile.headline}</p>

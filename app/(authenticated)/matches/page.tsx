@@ -17,6 +17,7 @@ interface MatchData {
   score: number;
   status: string;
   weekOf: string;
+  mutualCount?: number;
 }
 
 interface WeekGroup {
@@ -59,7 +60,7 @@ export default function MatchesPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/matches')
+    fetch('/api/matches?includeMutual=true')
       .then((r) => r.json())
       .then((data) => {
         if (data.success) setMatches(data.data.matches);
@@ -156,7 +157,7 @@ function MatchCard({
   onMessage: () => void;
   loading: boolean;
 }) {
-  const { matchedWith, score, status } = match;
+  const { matchedWith, score, status, mutualCount } = match;
 
   return (
     <div className="glass rounded-xl p-5">
@@ -190,6 +191,15 @@ function MatchCard({
           <div className="text-xs text-text-tertiary">match</div>
         </div>
       </div>
+
+      {mutualCount !== undefined && mutualCount > 0 && (
+        <div className="flex items-center gap-1.5 mb-3">
+          <svg className="w-3.5 h-3.5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span className="text-xs text-gold">{mutualCount} mutual</span>
+        </div>
+      )}
 
       {matchedWith.profile?.skills && matchedWith.profile.skills.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-4">

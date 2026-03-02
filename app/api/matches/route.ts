@@ -10,6 +10,8 @@ export async function GET(req: NextRequest) {
 
   try {
     await connectDB();
+    const includeMutual = req.nextUrl.searchParams.get('includeMutual') === 'true';
+
     const matches = await Match.find({
       $or: [{ user1: user!._id }, { user2: user!._id }],
     })
@@ -19,10 +21,41 @@ export async function GET(req: NextRequest) {
       .populate('user2', 'name school profile.headline profile.skills profile.avatarUrl')
       .lean();
 
-    return successResponse({
-      matches: matches.map((m) => {
+    let myConnectedPartners: Set<string> | null = null;
+    if (includeMutual) {
+      const connectedMatches = await Match.find({
+        $or: [{ user1: user!._id }, { user2: user!._id }],
+        status: 'connected',
+      }).lean();
+      myConnectedPartners = new Set(
+        connectedMatches.map((m) =>
+          m.user1.toString() === user!._id.toString() ? m.user2.toString() : m.user1.toString()
+        )
+      );
+    }
+
+    const matchResults = await Promise.all(
+      matches.map(async (m) => {
         const otherUser =
           m.user1._id.toString() === user!._id.toString() ? m.user2 : m.user1;
+
+        let mutualCount: number | undefined;
+        if (includeMutual && myConnectedPartners) {
+          const otherId = otherUser._id.toString();
+          const theirConnections = await Match.find({
+            $or: [{ user1: otherId }, { user2: otherId }],
+            status: 'connected',
+          }).lean();
+          const theirPartners = new Set(
+            theirConnections.map((tm) =>
+              tm.user1.toString() === otherId ? tm.user2.toString() : tm.user1.toString()
+            )
+          );
+          mutualCount = [...myConnectedPartners].filter(
+            (id) => theirPartners.has(id) && id !== otherId
+          ).length;
+        }
+
         return {
           id: m._id,
           matchedWith: otherUser,
@@ -30,9 +63,12 @@ export async function GET(req: NextRequest) {
           score: m.score,
           scoreBreakdown: m.scoreBreakdown,
           status: m.status,
+          ...(mutualCount !== undefined && { mutualCount }),
         };
-      }),
-    });
+      })
+    );
+
+    return successResponse({ matches: matchResults });
   } catch (err) {
     console.error('Matches error:', err);
     return errorResponse('Server error', 'Something went wrong', 500);
