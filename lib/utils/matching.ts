@@ -92,12 +92,21 @@ export async function computeMatchScore(u1: IUser, u2: IUser): Promise<{
   const schoolDiversity = computeSchoolDiversity(u1.school, u2.school);
   const stageAlignment = computeStageAlignment(u1, u2);
 
+  const bothSparse =
+    (u1.profile?.skills || []).length === 0 &&
+    (u2.profile?.skills || []).length === 0 &&
+    (u1.profile?.interests || []).length === 0 &&
+    (u2.profile?.interests || []).length === 0;
+
+  const randomness = bothSparse ? Math.random() * 40 : 0;
+
   const score = Math.round(
     skillComplementarity * 0.35 +
     interestAlignment * 0.25 +
     schoolDiversity * 0.15 +
     stageAlignment * 0.15 +
-    10 // base novelty score; adjusted below
+    10 +
+    randomness
   );
 
   return {

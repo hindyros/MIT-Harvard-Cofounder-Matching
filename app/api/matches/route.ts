@@ -15,8 +15,8 @@ export async function GET(req: NextRequest) {
     })
       .sort({ weekOf: -1 })
       .limit(20)
-      .populate('user1', 'name school profile')
-      .populate('user2', 'name school profile')
+      .populate('user1', 'name school profile.headline profile.skills profile.avatarUrl')
+      .populate('user2', 'name school profile.headline profile.skills profile.avatarUrl')
       .lean();
 
     return successResponse({
