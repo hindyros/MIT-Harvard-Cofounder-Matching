@@ -58,7 +58,6 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (!user.isVerified) user.isVerified = true;
       if (!user.isApproved) user.isApproved = true;
       await user.save();
     } else {
@@ -68,7 +67,6 @@ export async function POST(req: NextRequest) {
         passwordHash: randomHash,
         name,
         school,
-        isVerified: true,
         isApproved: true,
       });
     }

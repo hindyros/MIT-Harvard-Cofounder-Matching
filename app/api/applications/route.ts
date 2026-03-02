@@ -8,7 +8,6 @@ export async function POST(req: NextRequest) {
   try {
     const user = await authenticateUser(req);
     if (!user) return errorResponse('Unauthorized', 'Please log in', 401);
-    if (!user.isVerified) return errorResponse('Not verified', 'Verify your email first', 403);
 
     await connectDB();
 

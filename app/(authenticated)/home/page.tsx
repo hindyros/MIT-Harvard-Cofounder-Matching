@@ -48,7 +48,7 @@ export default function HomePage() {
   return (
     <div className="animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
+        <h1 className="text-3xl font-bold mb-2 font-display">Welcome back</h1>
         <p className="text-text-secondary">Here&apos;s what&apos;s happening in your network.</p>
       </div>
 

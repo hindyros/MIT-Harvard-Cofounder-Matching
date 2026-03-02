@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useClerk } from '@clerk/nextjs';
 import Link from 'next/link';
 
 interface User {
@@ -25,6 +26,7 @@ const navItems = [
 export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { signOut } = useClerk();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -44,17 +46,18 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
   }, [router]);
 
   const handleLogout = useCallback(async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await signOut();
     router.push('/');
-  }, [router]);
+  }, [signOut, router]);
 
   const handleDeleteAccount = useCallback(async () => {
     const res = await fetch('/api/auth/delete-account', { method: 'DELETE' });
     const data = await res.json();
     if (data.success) {
+      await signOut();
       router.push('/');
     }
-  }, [router]);
+  }, [signOut, router]);
 
   if (loading) {
     return (
@@ -69,7 +72,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       <aside className="w-64 border-r border-border bg-surface flex flex-col fixed h-screen">
         <div className="p-6 border-b border-border">
           <Link href="/home">
-            <h1 className="text-lg font-bold text-gold">Founders Club</h1>
+            <h1 className="text-lg font-bold text-gold font-display">Founders Club</h1>
             <p className="text-text-tertiary text-xs mt-0.5">MIT × Harvard</p>
           </Link>
         </div>

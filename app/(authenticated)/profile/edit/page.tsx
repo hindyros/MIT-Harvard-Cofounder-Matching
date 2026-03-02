@@ -47,10 +47,7 @@ export default function EditProfilePage() {
     fetch('/api/auth/me')
       .then((r) => r.json())
       .then((data) => {
-        if (!data.success) {
-          router.push('/');
-          return;
-        }
+        if (!data.success) return;
         const d = data.data as ProfileData;
         setProfileData(d);
         setName(d.name || '');
@@ -150,7 +147,7 @@ export default function EditProfilePage() {
   return (
     <div className="animate-fade-in max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Edit Profile</h1>
+        <h1 className="text-3xl font-bold mb-2 font-display">Edit Profile</h1>
         <p className="text-text-secondary">Update your information visible to other members.</p>
       </div>
 

@@ -51,7 +51,7 @@ export default function NewEventPage() {
         Back to events
       </Link>
 
-      <h1 className="text-3xl font-bold mb-8 mt-4">Create Event</h1>
+      <h1 className="text-3xl font-bold mb-8 mt-4 font-display">Create Event</h1>
 
       {error && (
         <div className="bg-error/10 border border-error/20 rounded-lg px-4 py-3 mb-6 text-sm text-error">{error}</div>

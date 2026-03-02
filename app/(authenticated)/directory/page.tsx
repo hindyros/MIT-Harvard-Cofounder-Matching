@@ -45,7 +45,7 @@ export default function DirectoryPage() {
   return (
     <div className="animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Directory</h1>
+        <h1 className="text-3xl font-bold mb-2 font-display">Directory</h1>
         <p className="text-text-secondary">
           {total} members in the community
         </p>

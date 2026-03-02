@@ -85,7 +85,7 @@ export default function ApplicationsPage() {
   return (
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Applications</h1>
+        <h1 className="text-3xl font-bold font-display">Applications</h1>
         <div className="flex items-center gap-2">
           <div className="text-xs text-text-tertiary mr-4">
             <kbd className="px-1.5 py-0.5 bg-surface-elevated rounded text-text-secondary">j</kbd>/<kbd className="px-1.5 py-0.5 bg-surface-elevated rounded text-text-secondary">k</kbd> navigate

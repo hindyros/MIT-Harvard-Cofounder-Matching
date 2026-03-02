@@ -14,12 +14,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .then((r) => r.json())
       .then((data) => {
         if (!data.success || data.data.role !== 'admin') {
-          router.push('/login');
+          router.push('/sign-in');
           return;
         }
         setLoading(false);
       })
-      .catch(() => router.push('/login'));
+      .catch(() => router.push('/sign-in'));
   }, [router]);
 
   if (loading) {
@@ -36,7 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/admin">
-              <h1 className="text-lg font-bold text-gold">Founders Club Admin</h1>
+              <h1 className="text-lg font-bold text-gold font-display">Founders Club Admin</h1>
             </Link>
             <nav className="flex gap-1">
               <Link

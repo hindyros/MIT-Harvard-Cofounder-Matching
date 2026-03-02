@@ -14,16 +14,14 @@ export interface IUserProfile {
 }
 
 export interface IUser extends Document {
+  clerkUserId?: string;
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
   name: string;
   school: 'MIT' | 'Harvard';
-  isVerified: boolean;
   isApproved: boolean;
   role: 'user' | 'admin';
   profile: IUserProfile;
-  verificationToken?: string;
-  verificationExpires?: Date;
   lastActive: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -31,11 +29,11 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
+    clerkUserId: { type: String, unique: true, sparse: true },
     email: { type: String, required: true, unique: true, lowercase: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, required: false },
     name: { type: String, required: true },
     school: { type: String, required: true, enum: ['MIT', 'Harvard'] },
-    isVerified: { type: Boolean, default: false },
     isApproved: { type: Boolean, default: false },
     role: { type: String, default: 'user', enum: ['user', 'admin'] },
     profile: {
@@ -50,8 +48,6 @@ const UserSchema = new Schema<IUser>(
       yearOfStudy: String,
       program: String,
     },
-    verificationToken: String,
-    verificationExpires: Date,
     lastActive: { type: Date, default: Date.now },
   },
   { timestamps: true }

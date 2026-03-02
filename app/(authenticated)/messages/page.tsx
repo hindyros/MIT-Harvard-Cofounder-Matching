@@ -47,7 +47,7 @@ export default function MessagesPage() {
   return (
     <div className="animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Messages</h1>
+        <h1 className="text-3xl font-bold mb-2 font-display">Messages</h1>
         <p className="text-text-secondary">Your conversations with other founders.</p>
       </div>
 

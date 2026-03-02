@@ -8,11 +8,11 @@ const MONGODB_URI = process.env.MONGODB_URI!;
 const MONGODB_DB = process.env.MONGODB_DB || 'cofounder-matching';
 
 async function main() {
-  const action = process.argv[2]; // 'verify' or 'delete'
+  const action = process.argv[2]; // 'approve' or 'delete'
   const email = process.argv[3];
 
   if (!action || !email) {
-    console.log('Usage: npx tsx scripts/fix-user.ts <verify|delete> <email>');
+    console.log('Usage: npx tsx scripts/fix-user.ts <approve|delete> <email>');
     process.exit(1);
   }
 
@@ -26,19 +26,19 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Found user: ${user.name} (${user.email}), verified: ${user.isVerified}`);
+  console.log(`Found user: ${user.name} (${user.email}), approved: ${user.isApproved}`);
 
-  if (action === 'verify') {
+  if (action === 'approve') {
     await users.updateOne(
       { _id: user._id },
-      { $set: { isVerified: true, verificationToken: null, verificationExpires: null } }
+      { $set: { isApproved: true } }
     );
-    console.log('User marked as verified. You can now log in.');
+    console.log('User marked as approved.');
   } else if (action === 'delete') {
     await users.deleteOne({ _id: user._id });
-    console.log('User deleted. You can now re-register.');
+    console.log('User deleted. They can re-register via Clerk.');
   } else {
-    console.log('Unknown action. Use "verify" or "delete".');
+    console.log('Unknown action. Use "approve" or "delete".');
   }
 
   await mongoose.disconnect();

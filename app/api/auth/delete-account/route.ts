@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { clerkClient } from '@clerk/nextjs/server';
 import { connectDB } from '@/lib/db/mongodb';
 import { authenticateUser } from '@/lib/utils/auth';
 import User from '@/lib/models/User';
@@ -8,10 +9,10 @@ import Message from '@/lib/models/Message';
 import Match from '@/lib/models/Match';
 import CoffeeChat from '@/lib/models/CoffeeChat';
 import Event from '@/lib/models/Event';
-import { errorResponse, successResponse } from '@/lib/utils/api-helpers';
+import { errorResponse } from '@/lib/utils/api-helpers';
 
-export async function DELETE(req: NextRequest) {
-  const user = await authenticateUser(req);
+export async function DELETE() {
+  const user = await authenticateUser();
   if (!user) {
     return errorResponse('Unauthorized', 'Please log in', 401);
   }
@@ -29,13 +30,18 @@ export async function DELETE(req: NextRequest) {
       Conversation.deleteMany({ participants: userId }),
     ]);
 
+    if (user.clerkUserId) {
+      try {
+        const client = await clerkClient();
+        await client.users.deleteUser(user.clerkUserId);
+      } catch (err) {
+        console.error('Failed to delete Clerk user:', err);
+      }
+    }
+
     await User.findByIdAndDelete(userId);
 
-    const response = NextResponse.json(
-      { success: true, data: { message: 'Account deleted' } },
-    );
-    response.cookies.set('token', '', { maxAge: 0, path: '/' });
-    return response;
+    return NextResponse.json({ success: true, data: { message: 'Account deleted' } });
   } catch (err) {
     console.error('Delete account error:', err);
     return errorResponse('Server error', 'Something went wrong', 500);

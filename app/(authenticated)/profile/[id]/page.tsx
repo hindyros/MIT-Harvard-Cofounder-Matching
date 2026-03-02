@@ -76,7 +76,7 @@ export default function ProfilePage() {
               {profile.name.charAt(0)}
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{profile.name}</h1>
+              <h1 className="text-2xl font-bold font-display">{profile.name}</h1>
               <p className={`text-sm ${profile.school === 'MIT' ? 'text-mit' : 'text-harvard'}`}>
                 {profile.school}
                 {profile.profile.program && ` · ${profile.profile.program}`}

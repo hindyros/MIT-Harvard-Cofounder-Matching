@@ -34,7 +34,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="animate-fade-in">
-      <h1 className="text-3xl font-bold mb-8">Platform Metrics</h1>
+      <h1 className="text-3xl font-bold mb-8 font-display">Platform Metrics</h1>
 
       <section className="mb-8">
         <h2 className="text-sm font-semibold text-text-tertiary uppercase tracking-wider mb-4">Users</h2>

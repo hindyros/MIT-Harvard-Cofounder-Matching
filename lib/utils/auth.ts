@@ -1,32 +1,9 @@
 import { NextRequest } from 'next/server';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
+import { auth } from '@clerk/nextjs/server';
 import { connectDB } from '@/lib/db/mongodb';
 import User, { IUser } from '@/lib/models/User';
 import Agent, { IAgent } from '@/lib/models/Agent';
 import { errorResponse, extractApiKey } from './api-helpers';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-me';
-
-export function signToken(userId: string): string {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '30d' });
-}
-
-export function verifyToken(token: string): { userId: string } | null {
-  try {
-    return jwt.verify(token, JWT_SECRET) as { userId: string };
-  } catch {
-    return null;
-  }
-}
-
-export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 12);
-}
-
-export async function comparePassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
 
 const HARVARD_DOMAINS = [
   'harvard.edu',
@@ -61,34 +38,26 @@ export function validateEmail(email: string): { valid: boolean; school?: 'MIT' |
   return { valid: false };
 }
 
-export function getTokenFromRequest(req: NextRequest): string | null {
-  const cookie = req.cookies.get('token')?.value;
-  if (cookie) return cookie;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function authenticateUser(_req?: NextRequest): Promise<IUser | null> {
+  try {
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) return null;
 
-  const authHeader = req.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer ')) {
-    return authHeader.slice(7);
+    await connectDB();
+    const user = await User.findOne({ clerkUserId });
+    if (!user) return null;
+
+    User.updateOne({ _id: user._id }, { lastActive: new Date() }).exec();
+    return user;
+  } catch {
+    return null;
   }
-  return null;
 }
 
-export async function authenticateUser(req: NextRequest): Promise<IUser | null> {
-  const token = getTokenFromRequest(req);
-  if (!token) return null;
-
-  const payload = verifyToken(token);
-  if (!payload) return null;
-
-  await connectDB();
-  const user = await User.findById(payload.userId);
-  if (!user) return null;
-
-  User.updateOne({ _id: user._id }, { lastActive: new Date() }).exec();
-  return user;
-}
-
-export async function requireAuth(req: NextRequest) {
-  const user = await authenticateUser(req);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function requireAuth(_req?: NextRequest) {
+  const user = await authenticateUser();
   if (!user) {
     return { user: null, error: errorResponse('Unauthorized', 'Please log in', 401) };
   }
@@ -98,8 +67,9 @@ export async function requireAuth(req: NextRequest) {
   return { user, error: null };
 }
 
-export async function requireAdmin(req: NextRequest) {
-  const user = await authenticateUser(req);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function requireAdmin(_req?: NextRequest) {
+  const user = await authenticateUser();
   if (!user) {
     return { user: null, error: errorResponse('Unauthorized', 'Please log in', 401) };
   }
@@ -122,7 +92,7 @@ export async function authenticateAgent(req: NextRequest): Promise<IAgent | null
 }
 
 export async function authenticateUserOrAgent(req: NextRequest) {
-  const user = await authenticateUser(req);
+  const user = await authenticateUser();
   if (user) return { user, agent: null };
 
   const agent = await authenticateAgent(req);
@@ -137,7 +107,7 @@ export async function authenticateUserOrAgent(req: NextRequest) {
  * Agents must be claimed and linked to a user to pass this check.
  */
 export async function requireAuthOrAgent(req: NextRequest) {
-  const user = await authenticateUser(req);
+  const user = await authenticateUser();
   if (user) {
     if (!user.isApproved) {
       return { user: null, agent: null, error: errorResponse('Not approved', 'Your application is still pending review', 403) };
@@ -147,7 +117,7 @@ export async function requireAuthOrAgent(req: NextRequest) {
 
   const agent = await authenticateAgent(req);
   if (!agent) {
-    return { user: null, agent: null, error: errorResponse('Unauthorized', 'Provide a valid JWT cookie or agent API key', 401) };
+    return { user: null, agent: null, error: errorResponse('Unauthorized', 'Provide a valid session or agent API key', 401) };
   }
 
   if (agent.claimStatus !== 'claimed' || !agent.linkedUserId) {

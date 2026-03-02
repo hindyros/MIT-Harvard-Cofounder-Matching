@@ -69,7 +69,7 @@ export default function EventsPage() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Events</h1>
+          <h1 className="text-3xl font-bold mb-2 font-display">Events</h1>
           <p className="text-text-secondary">Upcoming events from the MIT × Harvard community.</p>
         </div>
         <Link

@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
 import * as dotenv from 'dotenv';
 import path from 'path';
 
@@ -9,8 +8,7 @@ const MONGODB_URI = process.env.MONGODB_URI!;
 const MONGODB_DB = process.env.MONGODB_DB || 'cofounder-matching';
 
 const ADMIN_EMAIL = process.argv[2] || 'hindyrossignol@gmail.com';
-const ADMIN_PASSWORD = process.argv[3] || 'Admin1234!';
-const ADMIN_NAME = process.argv[4] || 'Hindy Rossignol';
+const ADMIN_NAME = process.argv[3] || 'Hindy Rossignol';
 
 async function main() {
   console.log(`Connecting to ${MONGODB_DB}...`);
@@ -24,13 +22,10 @@ async function main() {
   }
   console.log('\nAll collections wiped.\n');
 
-  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
   await db.collection('users').insertOne({
     email: ADMIN_EMAIL.toLowerCase(),
-    passwordHash,
     name: ADMIN_NAME,
     school: 'MIT',
-    isVerified: true,
     isApproved: true,
     role: 'admin',
     profile: {
@@ -45,9 +40,8 @@ async function main() {
     updatedAt: new Date(),
   });
 
-  console.log('Admin user created:');
+  console.log('Admin user created (link to Clerk by signing in with this email):');
   console.log(`  Email:    ${ADMIN_EMAIL}`);
-  console.log(`  Password: ${ADMIN_PASSWORD}`);
   console.log(`  Role:     admin`);
   console.log(`  Approved: true`);
 
