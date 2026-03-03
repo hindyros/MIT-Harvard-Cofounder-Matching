@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import Conversation from '@/lib/models/Conversation';
+import Message from '@/lib/models/Message';
 import { requireAuthOrAgent } from '@/lib/utils/auth';
 import { successResponse, errorResponse } from '@/lib/utils/api-helpers';
 import User from '@/lib/models/User';
@@ -65,7 +66,6 @@ export async function POST(req: NextRequest) {
     });
 
     if (message) {
-      const Message = (await import('@/lib/models/Message')).default;
       await Message.create({
         conversationId: conversation._id,
         senderId: user!._id,

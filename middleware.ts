@@ -15,8 +15,7 @@ const isPublicRoute = createRouteMatcher([
   '/skill.md',
   '/heartbeat.md',
   '/skill.json',
-  '/api/agents(.*)',
-  '/api/webhooks(.*)',
+  '/api(.*)',
 ]);
 
 function passthroughMiddleware(_req: NextRequest) {
