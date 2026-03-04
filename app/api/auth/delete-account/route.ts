@@ -9,6 +9,7 @@ import Message from '@/lib/models/Message';
 import Match from '@/lib/models/Match';
 import CoffeeChat from '@/lib/models/CoffeeChat';
 import Event from '@/lib/models/Event';
+import Project from '@/lib/models/Project';
 import { errorResponse } from '@/lib/utils/api-helpers';
 
 export async function DELETE() {
@@ -24,10 +25,12 @@ export async function DELETE() {
     await Promise.all([
       Application.deleteMany({ userId }),
       Message.deleteMany({ senderId: userId }),
-      Match.deleteMany({ $or: [{ userId1: userId }, { userId2: userId }] }),
-      CoffeeChat.deleteMany({ $or: [{ requestedBy: userId }, { requestedTo: userId }] }),
+      Match.deleteMany({ $or: [{ user1: userId }, { user2: userId }] }),
+      CoffeeChat.deleteMany({ $or: [{ user1: userId }, { user2: userId }] }),
       Event.updateMany({ attendees: userId }, { $pull: { attendees: userId } }),
       Conversation.deleteMany({ participants: userId }),
+      Project.deleteMany({ createdBy: userId }),
+      Project.updateMany({ interestedUsers: userId }, { $pull: { interestedUsers: userId } }),
     ]);
 
     if (user.clerkUserId) {

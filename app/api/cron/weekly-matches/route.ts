@@ -62,8 +62,8 @@ export async function GET(req: NextRequest) {
       try {
         await sendWeeklyMatchEmail(userData.email, userData.name, userData.matches);
         emailsSent++;
-      } catch {
-        // continue on email failure
+      } catch (emailErr) {
+        console.error(`Failed to send match email to ${userData.email}:`, emailErr);
       }
     }
 
