@@ -52,8 +52,10 @@ export async function POST(req: NextRequest) {
     const results: { matchId: string; conversationId: string; recipientName: string }[] = [];
 
     for (const match of matches) {
-      const u1 = match.user1 as unknown as PopulatedUser;
-      const u2 = match.user2 as unknown as PopulatedUser;
+      const u1 = match.user1 as unknown as PopulatedUser | null;
+      const u2 = match.user2 as unknown as PopulatedUser | null;
+      if (!u1?._id || !u2?._id) continue;
+
       const isUser1 = u1._id.toString() === linkedUser._id.toString();
       const other = isUser1 ? u2 : u1;
       const self = isUser1 ? u1 : u2;
@@ -110,6 +112,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error('Auto-outreach error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Auto-outreach failed: ${message}`, 500);
   }
 }

@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
     return successResponse({ coffeeChats: chats });
   } catch (err) {
     console.error('Coffee chats error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to load coffee chats: ${message}`, 500);
   }
 }
 
@@ -31,7 +32,14 @@ export async function POST(req: NextRequest) {
 
   try {
     await connectDB();
-    const { matchId, userId, scheduledAt, location } = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse('Invalid request body', 'Expected a JSON object with coffee chat fields', 400);
+    }
+
+    const { matchId, userId, scheduledAt, location } = body as { matchId?: string; userId?: string; scheduledAt?: string; location?: string };
 
     if (!userId || !scheduledAt) {
       return errorResponse('Missing fields', 'userId and scheduledAt are required', 400);
@@ -48,6 +56,7 @@ export async function POST(req: NextRequest) {
     return successResponse({ id: chat._id }, 201);
   } catch (err) {
     console.error('Create coffee chat error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to create coffee chat: ${message}`, 500);
   }
 }

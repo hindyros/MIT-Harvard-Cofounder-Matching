@@ -37,7 +37,7 @@ export async function GET(
 
     await Message.updateMany(
       { conversationId: id, senderId: { $ne: user!._id }, readAt: null },
-      { readAt: new Date() }
+      { $set: { readAt: new Date() } }
     );
 
     const unreadCount = conversation.unreadCount as Map<string, number> | undefined;
@@ -56,6 +56,7 @@ export async function GET(
     });
   } catch (err) {
     console.error('Get conversation error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to load conversation: ${message}`, 500);
   }
 }

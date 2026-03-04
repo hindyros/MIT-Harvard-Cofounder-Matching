@@ -22,13 +22,21 @@ export async function POST(
 
     if (!match) return errorResponse('Not found', 'Match not found', 404);
 
-    const { action } = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse('Invalid request body', 'Expected a JSON object with "action"', 400);
+    }
+
+    const { action } = body as { action?: string };
     match.status = action === 'connect' ? 'connected' : 'passed';
     await match.save();
 
     return successResponse({ id: match._id, status: match.status });
   } catch (err) {
     console.error('Connect error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to update match: ${message}`, 500);
   }
 }

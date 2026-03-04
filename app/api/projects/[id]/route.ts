@@ -24,7 +24,8 @@ export async function GET(
     return successResponse(project);
   } catch (err) {
     console.error('Project detail error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to load project: ${message}`, 500);
   }
 }
 
@@ -49,6 +50,7 @@ export async function DELETE(
     return successResponse({ deleted: true });
   } catch (err) {
     console.error('Delete project error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to delete project: ${message}`, 500);
   }
 }

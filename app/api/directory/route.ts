@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import { requireAuthOrAgent } from '@/lib/utils/auth';
-import { successResponse, errorResponse } from '@/lib/utils/api-helpers';
+import { successResponse, errorResponse, escapeRegex } from '@/lib/utils/api-helpers';
 
 export async function GET(req: NextRequest) {
   const { error } = await requireAuthOrAgent(req);
@@ -19,11 +19,12 @@ export async function GET(req: NextRequest) {
     const filter: Record<string, unknown> = { isApproved: true };
 
     if (q) {
+      const escaped = escapeRegex(q);
       filter.$or = [
-        { name: { $regex: q, $options: 'i' } },
-        { 'profile.headline': { $regex: q, $options: 'i' } },
-        { 'profile.bio': { $regex: q, $options: 'i' } },
-        { 'profile.skills': { $regex: q, $options: 'i' } },
+        { name: { $regex: escaped, $options: 'i' } },
+        { 'profile.headline': { $regex: escaped, $options: 'i' } },
+        { 'profile.bio': { $regex: escaped, $options: 'i' } },
+        { 'profile.skills': { $regex: escaped, $options: 'i' } },
       ];
     }
 
@@ -32,8 +33,8 @@ export async function GET(req: NextRequest) {
     }
 
     if (skills) {
-      const skillList = skills.split(',').map((s) => s.trim());
-      filter['profile.skills'] = { $in: skillList.map((s) => new RegExp(s, 'i')) };
+      const skillList = skills.split(',').map((s) => s.trim()).filter(Boolean);
+      filter['profile.skills'] = { $in: skillList.map((s) => new RegExp(escapeRegex(s), 'i')) };
     }
 
     const total = await User.countDocuments(filter);
@@ -61,6 +62,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     console.error('Directory error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to search directory: ${message}`, 500);
   }
 }

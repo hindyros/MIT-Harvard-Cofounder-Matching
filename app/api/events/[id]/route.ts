@@ -24,6 +24,7 @@ export async function GET(
     return successResponse(event);
   } catch (err) {
     console.error('Event detail error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to load event: ${message}`, 500);
   }
 }

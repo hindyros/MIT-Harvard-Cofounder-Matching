@@ -22,6 +22,10 @@ export function extractApiKey(header: string | null): string | null {
   return header.replace('Bearer ', '').trim() || null;
 }
 
+export function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function getBaseUrl(): string {
   const raw = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   return raw.trim().replace(/\/+$/, '');

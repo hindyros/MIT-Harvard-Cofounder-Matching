@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import Project from '@/lib/models/Project';
 import { requireAuthOrAgent } from '@/lib/utils/auth';
-import { successResponse, errorResponse } from '@/lib/utils/api-helpers';
+import { successResponse, errorResponse, escapeRegex } from '@/lib/utils/api-helpers';
 
 export async function GET(req: NextRequest) {
   const { error } = await requireAuthOrAgent(req);
@@ -20,10 +20,11 @@ export async function GET(req: NextRequest) {
     if (status && status !== 'all') filter.status = status;
     if (school && school !== 'all') filter.school = school;
     if (q) {
+      const escaped = escapeRegex(q);
       filter.$or = [
-        { title: { $regex: q, $options: 'i' } },
-        { description: { $regex: q, $options: 'i' } },
-        { tags: { $regex: q, $options: 'i' } },
+        { title: { $regex: escaped, $options: 'i' } },
+        { description: { $regex: escaped, $options: 'i' } },
+        { tags: { $regex: escaped, $options: 'i' } },
       ];
     }
 
@@ -52,7 +53,8 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     console.error('Projects error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to load projects: ${message}`, 500);
   }
 }
 
@@ -62,7 +64,14 @@ export async function POST(req: NextRequest) {
 
   try {
     await connectDB();
-    const { title, description, rolesNeeded, tags, school } = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse('Invalid request body', 'Expected a JSON object with project fields', 400);
+    }
+
+    const { title, description, rolesNeeded, tags, school } = body as Record<string, unknown>;
 
     if (!title || !description || !school) {
       return errorResponse('Missing fields', 'Title, description, and school are required', 400);
@@ -81,6 +90,7 @@ export async function POST(req: NextRequest) {
     return successResponse({ id: project._id, title: project.title }, 201);
   } catch (err) {
     console.error('Create project error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to create project: ${message}`, 500);
   }
 }

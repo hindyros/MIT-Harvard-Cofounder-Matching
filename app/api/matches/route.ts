@@ -34,8 +34,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const matchResults = await Promise.all(
+    const matchResults = (await Promise.all(
       matches.map(async (m) => {
+        if (!m.user1?._id || !m.user2?._id) return null;
+
         const otherUser =
           m.user1._id.toString() === user!._id.toString() ? m.user2 : m.user1;
 
@@ -66,11 +68,12 @@ export async function GET(req: NextRequest) {
           ...(mutualCount !== undefined && { mutualCount }),
         };
       })
-    );
+    )).filter(Boolean);
 
     return successResponse({ matches: matchResults });
   } catch (err) {
     console.error('Matches error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to load matches: ${message}`, 500);
   }
 }

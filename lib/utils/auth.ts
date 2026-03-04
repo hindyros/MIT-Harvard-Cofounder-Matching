@@ -136,24 +136,32 @@ export async function requireAdmin(_req?: NextRequest) {
 }
 
 export async function authenticateAgent(req: NextRequest): Promise<IAgent | null> {
-  const apiKey = extractApiKey(req.headers.get('authorization'));
-  if (!apiKey) return null;
+  try {
+    const apiKey = extractApiKey(req.headers.get('authorization'));
+    if (!apiKey) return null;
 
-  await connectDB();
-  const agent = await Agent.findOne({ apiKey });
-  if (!agent) return null;
+    await connectDB();
+    const agent = await Agent.findOne({ apiKey });
+    if (!agent) return null;
 
-  Agent.updateOne({ _id: agent._id }, { lastActive: new Date() }).exec();
-  return agent;
+    Agent.updateOne({ _id: agent._id }, { lastActive: new Date() }).exec();
+    return agent;
+  } catch (err) {
+    console.error('Agent authentication failed:', err);
+    return null;
+  }
 }
 
 export async function authenticateUserOrAgent(req: NextRequest) {
-  const user = await authenticateUser();
-  if (user) return { user, agent: null };
+  try {
+    const user = await authenticateUser();
+    if (user) return { user, agent: null };
 
-  const agent = await authenticateAgent(req);
-  if (agent) return { user: null, agent };
-
+    const agent = await authenticateAgent(req);
+    if (agent) return { user: null, agent };
+  } catch (err) {
+    console.error('Auth (authenticateUserOrAgent) failed:', err);
+  }
   return { user: null, agent: null };
 }
 
@@ -163,28 +171,33 @@ export async function authenticateUserOrAgent(req: NextRequest) {
  * Agents must be claimed and linked to a user to pass this check.
  */
 export async function requireAuthOrAgent(req: NextRequest) {
-  const user = await authenticateUser();
-  if (user) {
-    if (!user.isApproved) {
-      return { user: null, agent: null, error: errorResponse('Not approved', 'Your application is still pending review', 403) };
+  try {
+    const user = await authenticateUser();
+    if (user) {
+      if (!user.isApproved) {
+        return { user: null, agent: null, error: errorResponse('Not approved', 'Your application is still pending review', 403) };
+      }
+      return { user, agent: null, error: null };
     }
-    return { user, agent: null, error: null };
-  }
 
-  const agent = await authenticateAgent(req);
-  if (!agent) {
-    return { user: null, agent: null, error: errorResponse('Unauthorized', 'Provide a valid session or agent API key', 401) };
-  }
+    const agent = await authenticateAgent(req);
+    if (!agent) {
+      return { user: null, agent: null, error: errorResponse('Unauthorized', 'Provide a valid session or agent API key', 401) };
+    }
 
-  if (agent.claimStatus !== 'claimed' || !agent.linkedUserId) {
-    return { user: null, agent, error: errorResponse('Agent not claimed', 'This agent must be claimed by a human first. Send the claim_url to your human.', 403) };
-  }
+    if (agent.claimStatus !== 'claimed' || !agent.linkedUserId) {
+      return { user: null, agent, error: errorResponse('Agent not claimed', 'This agent must be claimed by a human first. Send the claim_url to your human.', 403) };
+    }
 
-  await connectDB();
-  const linkedUser = await User.findById(agent.linkedUserId);
-  if (!linkedUser || !linkedUser.isApproved) {
-    return { user: null, agent, error: errorResponse('Linked user unavailable', 'The linked human account is not approved or no longer exists', 403) };
-  }
+    await connectDB();
+    const linkedUser = await User.findById(agent.linkedUserId);
+    if (!linkedUser || !linkedUser.isApproved) {
+      return { user: null, agent, error: errorResponse('Linked user unavailable', 'The linked human account is not approved or no longer exists', 403) };
+    }
 
-  return { user: linkedUser, agent, error: null };
+    return { user: linkedUser, agent, error: null };
+  } catch (err) {
+    console.error('Auth (requireAuthOrAgent) failed:', err);
+    return { user: null, agent: null, error: errorResponse('Server error', 'Authentication service unavailable', 500) };
+  }
 }

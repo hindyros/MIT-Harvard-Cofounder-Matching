@@ -23,34 +23,53 @@ export async function PATCH(req: NextRequest) {
     if (!user) return errorResponse('Unauthorized', 'Please log in', 401);
 
     await connectDB();
-    const updates = await req.json();
+
+    let updates: Record<string, unknown>;
+    try {
+      updates = await req.json();
+    } catch {
+      return errorResponse('Invalid request body', 'Expected a JSON object with profile fields', 400);
+    }
+
+    if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
+      return errorResponse('Invalid request body', 'Expected a JSON object with profile fields', 400);
+    }
 
     const allowedFields = [
       'headline', 'bio', 'skills', 'interests', 'lookingFor',
       'linkedIn', 'website', 'avatarUrl', 'yearOfStudy', 'program',
     ];
 
-    const profileUpdate: Record<string, unknown> = {};
+    const setFields: Record<string, unknown> = {};
     for (const key of allowedFields) {
       if (updates[key] !== undefined) {
-        profileUpdate[`profile.${key}`] = updates[key];
+        setFields[`profile.${key}`] = updates[key];
       }
     }
 
-    if (updates.name) {
-      await User.updateOne({ _id: user._id }, { name: updates.name, ...profileUpdate });
-    } else {
-      await User.updateOne({ _id: user._id }, profileUpdate);
+    if (updates.name && typeof updates.name === 'string') {
+      setFields.name = updates.name.trim();
     }
 
+    if (Object.keys(setFields).length === 0) {
+      return errorResponse('Nothing to update', 'Provide at least one field to update', 400);
+    }
+
+    await User.updateOne({ _id: user._id }, { $set: setFields });
+
     const updated = await User.findById(user._id);
+    if (!updated) {
+      return errorResponse('User not found', 'Could not find user after update', 404);
+    }
+
     return successResponse({
-      id: updated!._id,
-      name: updated!.name,
-      profile: updated!.profile,
+      id: updated._id,
+      name: updated.name,
+      profile: updated.profile,
     });
   } catch (err) {
     console.error('Profile update error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Profile update failed: ${message}`, 500);
   }
 }

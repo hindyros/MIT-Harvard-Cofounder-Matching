@@ -39,6 +39,7 @@ export async function POST(
     return successResponse({ attending: true, attendeeCount: event.attendees.length });
   } catch (err) {
     console.error('RSVP error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `RSVP failed: ${message}`, 500);
   }
 }

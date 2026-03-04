@@ -53,7 +53,8 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     console.error('Events error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to load events: ${message}`, 500);
   }
 }
 
@@ -63,8 +64,15 @@ export async function POST(req: NextRequest) {
 
   try {
     await connectDB();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse('Invalid request body', 'Expected a JSON object with event fields', 400);
+    }
+
     const { title, description, date, endDate, location, school, category, maxAttendees } =
-      await req.json();
+      body as { title?: string; description?: string; date?: string; endDate?: string; location?: string; school?: string; category?: string; maxAttendees?: number };
 
     if (!title || !description || !date || !location || !school || !category) {
       return errorResponse('Missing fields', 'Title, description, date, location, school, and category are required', 400);
@@ -86,6 +94,7 @@ export async function POST(req: NextRequest) {
     return successResponse({ id: event._id, title: event.title }, 201);
   } catch (err) {
     console.error('Create event error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to create event: ${message}`, 500);
   }
 }

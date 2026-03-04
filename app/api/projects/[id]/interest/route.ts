@@ -35,6 +35,7 @@ export async function POST(
     return successResponse({ interested: true, interestedCount: project.interestedUsers.length });
   } catch (err) {
     console.error('Interest toggle error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to toggle interest: ${message}`, 500);
   }
 }

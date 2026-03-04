@@ -15,7 +15,14 @@ export async function POST(
   try {
     await connectDB();
     const { id } = await params;
-    const { content } = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse('Invalid request body', 'Expected a JSON object with "content"', 400);
+    }
+
+    const { content } = body as { content?: string };
 
     if (!content?.trim()) {
       return errorResponse('Empty message', 'Message content is required', 400);
@@ -62,6 +69,7 @@ export async function POST(
     );
   } catch (err) {
     console.error('Send message error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to send message: ${message}`, 500);
   }
 }

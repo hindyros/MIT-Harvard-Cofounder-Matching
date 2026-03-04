@@ -25,12 +25,13 @@ export async function GET(req: NextRequest) {
         participants: c.participants,
         lastMessage: c.lastMessage,
         lastActivity: c.lastActivity,
-        unreadCount: c.unreadCount?.get?.(user!._id.toString()) || 0,
+        unreadCount: (c.unreadCount as Record<string, number> | undefined)?.[user!._id.toString()] || 0,
       })),
     });
   } catch (err) {
     console.error('Conversations error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to load conversations: ${message}`, 500);
   }
 }
 
@@ -40,7 +41,14 @@ export async function POST(req: NextRequest) {
 
   try {
     await connectDB();
-    const { recipientId, message } = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse('Invalid request body', 'Expected a JSON object with "recipientId"', 400);
+    }
+
+    const { recipientId, message } = body as { recipientId?: string; message?: string };
 
     if (!recipientId) {
       return errorResponse('Missing recipientId', 'Provide the user ID to message', 400);
@@ -76,6 +84,7 @@ export async function POST(req: NextRequest) {
     return successResponse({ id: conversation._id, existing: false }, 201);
   } catch (err) {
     console.error('Create conversation error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Failed to create conversation: ${msg}`, 500);
   }
 }

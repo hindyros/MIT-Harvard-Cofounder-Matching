@@ -29,7 +29,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, name } = await req.json();
+    let reqBody: Record<string, unknown>;
+    try {
+      reqBody = await req.json();
+    } catch {
+      return errorResponse('Invalid request body', 'Expected a JSON object with "email" and "name"', 400);
+    }
+
+    const { email, name } = reqBody as { email?: string; name?: string };
     if (!email || !name) {
       return errorResponse('Missing fields', 'Both "email" and "name" are required', 400);
     }
@@ -95,6 +102,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (err) {
     console.error('Agent create-account error:', err);
-    return errorResponse('Server error', 'Something went wrong', 500);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return errorResponse('Server error', `Account creation failed: ${message}`, 500);
   }
 }
